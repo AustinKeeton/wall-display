@@ -85,6 +85,7 @@ ssh mini 'launchctl kickstart -k user/$(id -u)/com.audie.wall-display'
 | `/opt` → `/home/root/opt` symlink (replaced a bind-mount unit that made a boot ordering cycle with `/home` on 3.22) | `rm /opt` |
 | `rm2fb.service.d/conflicts.conf`: rm2fb `Conflicts=xochitl` (xochitl crashes and its handler reboots the tablet if it starts while rm2fb holds the screen) | delete the drop-in |
 | `wall-ink.service` (from the wall-ink repo; not enabled) | delete it |
+| pen-smooth: `xochitl.service.d/pen-smooth.conf` loads `/home/root/pen-smooth/libpensmooth.so` into xochitl (handwriting smoothing; see the [pen-smooth](https://github.com/AustinKeeton/pen-smooth) repo) | `scripts/uninstall.sh` there, or delete the drop-in and restart xochitl; `touch /home/root/pen-smooth/disable` turns it off |
 | rm2fb server: `/opt/bin/rm2fb_server`, `/opt/lib/librm2fb_*`, units `rm2fb.service`/`.socket` in `/etc/systemd/system` (**not enabled**) | delete them |
 | FBInk 1.25.0: `/opt/bin/fbink` (Toltec `fbink_1.25.0-2_rmall.ipk`) | delete it |
 | SSH over Wi-Fi turned back on (3.22 turns it off) | `rm-ssh-over-wlan off` |
