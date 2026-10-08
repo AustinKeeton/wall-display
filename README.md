@@ -82,7 +82,9 @@ ssh mini 'launchctl kickstart -k user/$(id -u)/com.audie.wall-display'
 |---|---|
 | Firmware 3.16.2.3 → 3.22.4.2 | `codexctl restore` should swap back to the other partition (untested; codexctl's install was buggy on this tablet, so check first) |
 | Auto-updates off: `swupdate.service`/`.socket` masked, `update-engine.service` disabled | `systemctl unmask swupdate.service swupdate.socket && systemctl enable --now update-engine` |
-| `/home/root/opt` bind-mounted at `/opt` (`/etc/systemd/system/opt.mount`, enabled) | `systemctl disable --now opt.mount` |
+| `/opt` → `/home/root/opt` symlink (replaced a bind-mount unit that made a boot ordering cycle with `/home` on 3.22) | `rm /opt` |
+| `rm2fb.service.d/conflicts.conf`: rm2fb `Conflicts=xochitl` (xochitl crashes and its handler reboots the tablet if it starts while rm2fb holds the screen) | delete the drop-in |
+| `wall-ink.service` (from the wall-ink repo; not enabled) | delete it |
 | rm2fb server: `/opt/bin/rm2fb_server`, `/opt/lib/librm2fb_*`, units `rm2fb.service`/`.socket` in `/etc/systemd/system` (**not enabled**) | delete them |
 | FBInk 1.25.0: `/opt/bin/fbink` (Toltec `fbink_1.25.0-2_rmall.ipk`) | delete it |
 | SSH over Wi-Fi turned back on (3.22 turns it off) | `rm-ssh-over-wlan off` |
@@ -102,7 +104,9 @@ LD_PRELOAD=/opt/lib/librm2fb_client.so /opt/bin/fbink -c -f -g file=/path/to/ima
 systemctl stop rm2fb.service && systemctl start xochitl
 ```
 
-Only one of `xochitl` and `rm2fb` can drive the screen at a time.
+Only one of `xochitl` and `rm2fb` can drive the screen at a time; the conflict drop-in makes systemd
+stop one before starting the other. For the pen app, `systemctl start wall-ink` / `stop wall-ink` does
+the whole swap.
 
 ### Sleep and wake (battery)
 
