@@ -1,0 +1,14 @@
+{
+  "width": 1872,
+  "height": 1404,
+  "rotate": 90,
+  "refresh_minutes": 15,
+  "port": 8765,
+  "location": {
+    "name": "Riverside · Jacksonville",
+    "latitude": 30.31,
+    "longitude": -81.68
+  },
+  "units": "fahrenheit",
+  "note": "Make something small today."
+}

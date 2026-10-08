@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  /* Designed for e-ink: pure black on white, no gradients, generous type. */
+  html, body { margin: 0; background: #fff; color: #000; }
+  body {
+    width: 100vw; height: 100vh; box-sizing: border-box;
+    padding: 120px 110px 90px;
+    font-family: "Iowan Old Style", "Palatino", Georgia, serif;
+    display: flex; flex-direction: column;
+  }
+  /* Portrait keeps the original flow: note sits above the footer at the bottom. */
+  .when { display: contents; }
+  .note { order: 1; }
+  .footer { order: 2; }
+  .weekday { font-size: 64px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .date { font-size: 168px; line-height: 1; margin-top: 12px; }
+  hr { border: 0; border-top: 4px solid #000; margin: 72px 0; }
+  .now { display: flex; align-items: baseline; gap: 40px; }
+  .temp { font-size: 200px; line-height: 1; }
+  .cond { font-size: 56px; font-style: italic; }
+  .place { font-size: 36px; color: #555; margin-top: 16px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .days { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 64px; }
+  .day { border-left: 2px solid #000; padding-left: 28px; }
+  .day:first-child { border-left: 0; padding-left: 0; }
+  .day .name { font-size: 36px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .day .hilo { font-size: 72px; margin-top: 8px; }
+  .day .lo { color: #777; }
+  .day .c { font-size: 34px; font-style: italic; margin-top: 4px; }
+  .note { margin-top: auto; font-size: 60px; font-style: italic; line-height: 1.3; }
+  .footer { margin-top: 56px; font-size: 26px; color: #777; letter-spacing: 0.06em; }
+  /* Landscape: date + note on the left, weather on the right. */
+  @media (orientation: landscape) {
+    body { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); grid-template-rows: 1fr auto;
+           column-gap: 100px; padding: 100px 110px 70px; }
+    .when { display: flex; flex-direction: column; grid-column: 1; grid-row: 1; }
+    #weather { grid-column: 2; grid-row: 1; border-left: 4px solid #000; padding-left: 70px; }
+    hr { display: none; }
+    .note { font-size: 52px; }
+    .date { font-size: 150px; white-space: nowrap; }
+    .footer { grid-column: 1 / span 2; grid-row: 2; margin-top: 40px; }
+    .days { margin-top: 80px; }
+    .day { padding-left: 22px; }
+    .day .hilo { font-size: 46px; white-space: nowrap; }
+    .day .c { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+  <div class="when">
+    <div class="weekday" id="weekday"></div>
+    <div class="date" id="date"></div>
+    <div class="note" id="note"></div>
+  </div>
+  <hr>
+  <div id="weather"></div>
+  <div class="footer" id="footer"></div>
+<script>
+const C = window.CONFIG || {};
+const now = new Date();
+const $ = id => document.getElementById(id);
+
+$("weekday").textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+$("date").textContent = now.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+$("note").textContent = C.note || "";
+$("footer").textContent = "UPDATED " + now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+// WMO weather codes -> words (no icons; reads like print)
+const WMO = {0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Overcast",45:"Fog",48:"Freezing fog",
+  51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",
+  66:"Freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",
+  80:"Showers",81:"Showers",82:"Heavy showers",85:"Snow showers",86:"Snow showers",
+  95:"Thunderstorms",96:"Thunderstorms",99:"Thunderstorms"};
+
+async function weather() {
+  const L = C.location || {};
+  if (L.latitude == null) {
+    $("weather").innerHTML = '<div class="cond">Set a location in config.json</div>';
+    return;
+  }
+  const u = new URL("https://api.open-meteo.com/v1/forecast");
+  u.search = new URLSearchParams({
+    latitude: L.latitude, longitude: L.longitude, timezone: "auto", forecast_days: 4,
+    temperature_unit: C.units || "fahrenheit",
+    current: "temperature_2m,weather_code",
+    daily: "temperature_2m_max,temperature_2m_min,weather_code",
+  });
+  const w = await (await fetch(u)).json();
+  const d = w.daily;
+  const days = [1, 2, 3].map(i => {
+    const name = new Date(d.time[i] + "T12:00").toLocaleDateString(undefined, { weekday: "short" });
+    return `<div class="day"><div class="name">${name}</div>
+      <div class="hilo">${Math.round(d.temperature_2m_max[i])}° <span class="lo">${Math.round(d.temperature_2m_min[i])}°</span></div>
+      <div class="c">${WMO[d.weather_code[i]] || ""}</div></div>`;
+  }).join("");
+  $("weather").innerHTML = `
+    <div class="now"><div class="temp">${Math.round(w.current.temperature_2m)}°</div>
+      <div><div class="cond">${WMO[w.current.weather_code] || ""}</div>
+      <div class="cond" style="font-size:44px">High ${Math.round(d.temperature_2m_max[0])}° · Low ${Math.round(d.temperature_2m_min[0])}°</div></div></div>
+    <div class="place">${L.name || ""}</div>
+    <div class="days">${days}</div>`;
+}
+
+weather().catch(e => { $("weather").innerHTML = '<div class="cond">Weather unavailable</div>'; })
+  .finally(() => { window.READY = true; });
+</script>
+</body>
+</html>

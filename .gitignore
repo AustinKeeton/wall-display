@@ -1,0 +1,6 @@
+.venv/
+out/
+__pycache__/
+.DS_Store
+# MacBook-only setup downloads: codexctl, rm2fb/FBInk packages, reMarkable firmware images.
+tools/
