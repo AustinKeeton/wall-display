@@ -13,7 +13,7 @@ Mac mini (always on)                         reMarkable 2 (on the wall)
 └───────────────────────────────┘           └──────────────────────────────┘
 ```
 
-The native pen app that runs on the tablet lives in its own repo, [wall-ink](https://github.com/AustinKeeton/wall-ink).
+The native pen app that runs on the tablet lives in its own repo, wall-ink (private).
 
 Roadmap: **v0** reMarkable 2 (now) → **v1** 13.3" Spectra 6 color panel → **v2** large statement piece.
 The server stays the same across versions; only the device end changes.
@@ -85,7 +85,7 @@ ssh mini 'launchctl kickstart -k user/$(id -u)/com.audie.wall-display'
 | `/opt` → `/home/root/opt` symlink (replaced a bind-mount unit that made a boot ordering cycle with `/home` on 3.22) | `rm /opt` |
 | `rm2fb.service.d/conflicts.conf`: rm2fb `Conflicts=xochitl` (xochitl crashes and its handler reboots the tablet if it starts while rm2fb holds the screen) | delete the drop-in |
 | `wall-ink.service` (from the wall-ink repo; not enabled) | delete it |
-| pen-smooth: `xochitl.service.d/pen-smooth.conf` loads `/home/root/pen-smooth/libpensmooth.so` into xochitl (handwriting smoothing; see the [pen-smooth](https://github.com/AustinKeeton/pen-smooth) repo) | `scripts/uninstall.sh` there, or delete the drop-in and restart xochitl; `touch /home/root/pen-smooth/disable` turns it off |
+| pen-smooth: `xochitl.service.d/pen-smooth.conf` loads `/home/root/pen-smooth/libpensmooth.so` into xochitl (handwriting smoothing; see the pen-smooth repo (private)) | `scripts/uninstall.sh` there, or delete the drop-in and restart xochitl; `touch /home/root/pen-smooth/disable` turns it off |
 | rm2fb server: `/opt/bin/rm2fb_server`, `/opt/lib/librm2fb_*`, units `rm2fb.service`/`.socket` in `/etc/systemd/system` (**not enabled**) | delete them |
 | FBInk 1.25.0: `/opt/bin/fbink` (Toltec `fbink_1.25.0-2_rmall.ipk`) | delete it |
 | SSH over Wi-Fi turned back on (3.22 turns it off) | `rm-ssh-over-wlan off` |
